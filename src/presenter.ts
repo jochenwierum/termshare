@@ -21,7 +21,7 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
     private readonly sessionManager: ISessionManager,
     private readonly wrappedProcess: Process,
     args: IProgramArguments) {
-    super(args.presenterBind, args, "ws-presenter");
+    super(args.presenterBind, args, "presenter");
 
     this.term = sessionManager.getTerminal("presenter") as CachingTerminal;
 
@@ -44,7 +44,7 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
 
   private async sendToMain(message: web.IServerMessage): Promise<void> {
     if (this.mainConnection) {
-      return this.sendProtobufMessage(this.mainConnection, message);
+      return this.send(this.mainConnection, message);
     }
   }
 
@@ -73,23 +73,23 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
   }
 
   private sendWaitingSetup(connection: WebSocket): Promise<void> {
-    return this.sendProtobufMessage(connection, {blocked: {}});
+    return this.send(connection, {blocked: {}});
   }
 
   private async handleMainMessage(decoded: web.PresenterClientMessage) {
     switch (decoded.content) {
       case "presenterResize":
-        this.wrappedProcess.resize(decoded.presenterResize?.width || 80, decoded.presenterResize?.height || 24);
+        this.wrappedProcess.resize(decoded.presenterResize?.width ?? 80, decoded.presenterResize?.height ?? 24);
         break;
       case "presenterStdin":
         this.wrappedProcess.stdin(decoded.presenterStdin as Uint8Array);
         break;
       case "selection":
         this.term.handleSelection(
-          decoded.selection?.startRow || -1,
-          decoded.selection?.startColumn || -1,
-          decoded.selection?.endRow || -1,
-          decoded.selection?.endColumn || -1);
+          decoded.selection?.startRow ?? -1,
+          decoded.selection?.startColumn ?? -1,
+          decoded.selection?.endRow ?? -1,
+          decoded.selection?.endColumn ?? -1);
         break;
       default:
     }
@@ -154,7 +154,7 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
 
       if (this.logger.isDebugEnabled()) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.logger.debug("Got message of type %s: %s", decoded.content, (decoded as any)[decoded.content || ""]);
+        this.logger.debug("Got message of type %s: %s", decoded.content, (decoded as any)[decoded.content ?? ""]);
       }
 
 

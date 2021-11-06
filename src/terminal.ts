@@ -57,7 +57,7 @@ export class CachingTerminal extends UpdatingTerminal {
               wrappedProcess: Process|null) {
     super();
 
-    this.logger = newLogger({component: "term-" + name});
+    this.logger = newLogger({component: "terminal", sessionName: name});
 
     this.terminal = new Terminal();
     this.serializeAddon = new SerializeAddon();

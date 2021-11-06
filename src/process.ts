@@ -47,9 +47,7 @@ export default class Process extends EventEmitter implements IDisposable {
       this.attachConsole(this.ptyProcess);
     }
 
-    this.ptyProcess.onExit(() => {
-      this.emit(EVENT_QUIT, new Quit());
-    });
+    this.ptyProcess.onExit(() => this.emit(EVENT_QUIT, new Quit()));
   }
 
   private attachConsole(ptyProcess: IPty) {

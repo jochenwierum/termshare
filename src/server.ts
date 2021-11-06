@@ -9,28 +9,23 @@ import * as path from "path";
 import {newLogger} from "./logger";
 import {Logger} from "winston";
 
-const portFromBind = (bind: string): number => {
+const parseBind = (bind: string): [string, number] => {
+  const fail = () => new Error(`Illegal bind address '${bind}', must be something like ':8080' or '127.0.0.1:8080'`);
+
   const pos = bind.indexOf(":");
   if (pos === -1) {
-    throw new Error(`Illegal bind address '${bind}', must be something like ':8080' or '127.0.0.1:8080'`);
+    throw fail();
   }
 
   const portString = bind.substr(pos + 1);
   const port = parseInt(portString);
   if (isNaN(port)) {
-    throw new Error(`Illegal bind address '${bind}', must be something like ':8080' or '127.0.0.1:8080'`);
+    throw fail();
   }
 
-  return port;
-};
+  const ip = pos === 0 ? "0.0.0.0" : bind.substr(0, pos);
 
-const hostFromBind = (bind: string): string => {
-  const pos = bind.indexOf(":");
-  if (pos === 0) {
-    return "0.0.0.0";
-  }
-
-  return bind.substr(0, pos);
+  return [ip, port];
 };
 
 type WebsocketWithHealth = WebSocket & { healthy?: boolean };
@@ -41,7 +36,6 @@ export abstract class WebSocketServer<M> implements IDisposable {
   protected logger: Logger;
   protected server: http.Server;
   protected readonly wsServer: WsServer;
-  private readonly name: string;
   private readonly bindPort: number;
   private readonly bindHost: string;
   private readonly pingInterval: NodeJS.Timer | null = null;
@@ -51,14 +45,12 @@ export abstract class WebSocketServer<M> implements IDisposable {
     protected readonly args: IProgramArguments,
     logName: string
   ) {
-    this.bindPort = portFromBind(bind);
-    this.bindHost = hostFromBind(bind);
-    this.name = `${logName}-${this.bindHost}:${this.bindPort}`;
-    this.logger = newLogger({component: this.name});
+    this.logger = newLogger({component: logName});
+    [this.bindHost, this.bindPort] = parseBind(bind);
 
     const app = express();
     this.server = app.listen(this.bindPort, this.bindHost, () =>
-      this.logger.info(`HTTP server ${this.name} started`));
+      this.logger.info(`HTTP server ${this.bindHost}:${this.bindPort} started`));
 
     this.wsServer = this.addWebsocketHandler(this.server);
     this.start(app);
@@ -133,7 +125,12 @@ export abstract class WebSocketServer<M> implements IDisposable {
     });
   }
 
-  protected async sendToSocket(connection: WebSocket, msg: Uint8Array): Promise<void> {
+  protected async sendRaw(connection: WebSocket, msg: Uint8Array): Promise<void> {
+    if (connection.readyState !== WebSocket.OPEN) {
+      this.logger.warn("Don't sending message - socket not open");
+      return Promise.resolve();
+    }
+
     return new Promise((resolve, reject) => connection.send(msg, {
         binary: true,
       }, err => {
@@ -148,14 +145,14 @@ export abstract class WebSocketServer<M> implements IDisposable {
     ));
   }
 
-  protected async sendProtobufMessage(connection: WebSocket, message: M): Promise<void> {
+  protected async send(connection: WebSocket, message: M): Promise<void> {
     if (this.logger.isDebugEnabled()) {
       const key = Object.keys(message)[0];
       this.logger.debug("Send message of type: %s: %s", key,
         JSON.stringify((message as unknown as { [_k: string]: string }) [key]));
     }
 
-    return this.sendToSocket(connection, this.marshalMessage(message));
+    return this.sendRaw(connection, this.marshalMessage(message));
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

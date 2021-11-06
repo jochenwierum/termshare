@@ -25,7 +25,6 @@ export class LocalSessionManager implements ISessionManager {
   public formatSessionName() {
     return "default";
   }
-
 }
 
 export class RemoteSessionManager implements ISessionManager {
@@ -39,7 +38,7 @@ export class RemoteSessionManager implements ISessionManager {
   }
 
   public getTerminal(sessionName: string): CachingTerminal | null {
-    return this.terminals.get(sessionName) || null;
+    return this.terminals.get(sessionName) ?? null;
   }
 
   public newTerminal(name: string, decorated: boolean): CachingTerminal {

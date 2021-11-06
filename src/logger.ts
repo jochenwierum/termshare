@@ -1,20 +1,26 @@
 import {createLogger, format, transports} from "winston";
 import {TransformableInfo} from "logform";
 
-const MAX_LEN = 27;
-const MAX_LEN_PAD = " ".repeat(25);
+const MAX_COMPONENT_LEN = 27;
+const MAX_LEVEL_LEN = 5;
+const SPACES = " ".repeat(MAX_COMPONENT_LEN);
 
 const formatComponent = (info: TransformableInfo) => {
-  const base = `[${info.component || "core"}]`;
-  if (base.length > MAX_LEN) {
-    return base;
-  } else {
-    return (`${base}${MAX_LEN_PAD}`).substr(0, MAX_LEN);
+  let result = "[";
+  result += info.component ?? "core";
+  if (info.sessionName) {
+    result += "/" + info.sessionName;
   }
+  result += "]";
+
+  const len = result.length;
+  return result + SPACES.substr(0, MAX_COMPONENT_LEN - len);
 };
 
-const formatSession = (info: TransformableInfo) =>
-  !info.sessionName ? "" : ` {${info.sessionName}}`;
+const pad = (info: TransformableInfo) => {
+  const len = (info.level as string).replace(/\u{1b}\[[^m]*m/gu, "").length;
+  return info.level + SPACES.substr(0, MAX_LEVEL_LEN - len);
+};
 
 export const rootLogger = createLogger({});
 
@@ -28,9 +34,8 @@ export const setupLogger = (level: string) => {
         format.timestamp(),
         format.errors({stack: true}),
         format.splat(),
-        format.padLevels(),
         format.colorize(),
-        format.printf(info => `${[info.timestamp]} ${(formatComponent(info))} ${info.level}${info.message}${(formatSession(info))}`)
+        format.printf(info => `${[info.timestamp]} ${pad(info)} ${(formatComponent(info))} ${info.message}`)
       ),
       transports: [new transports.Console()]
     }
@@ -40,4 +45,4 @@ export const setupLogger = (level: string) => {
   ((rootLogger as unknown) as any).rejections.handle(new transports.Console());
 };
 
-setupLogger("warn");
+setupLogger("info");

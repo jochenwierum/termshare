@@ -4,14 +4,15 @@
     "src/proto/**/*.js"
   ],
   "exclude": [
-      "src/run-develop.ts"
+    "src/run-develop.ts"
   ],
   "compilerOptions": {
     "declaration": true,
     "esModuleInterop": true,
     "importHelpers": true,
     "lib": [
-      "ES6", "ES2020"
+      "ES6",
+      "ES2020"
     ],
     "module": "CommonJS",
     "moduleResolution": "Node",
@@ -19,6 +20,8 @@
     "removeComments": true,
     "rootDir": "src",
     "strict": true,
-    "target": "ES2020"
+    "target": "ES2020",
+    "incremental": true,
+    "tsBuildInfoFile": ".ts-buildcache"
   }
 }

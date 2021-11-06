@@ -9,6 +9,7 @@ import {
   EVENT_SELECTION,
   IDisposable,
   Output,
+  Quit,
   Resize,
   Selection
 } from "./types";
@@ -27,7 +28,7 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
   constructor(
     private readonly sessionManager: RemoteSessionManager,
     args: IProgramArguments) {
-    super(args.repeaterBind, args, "ws-rept");
+    super(args.repeaterBind, args, "repeater-server");
   }
 
   protected marshalMessage(message: repeater.IStreamFeedback): Uint8Array {
@@ -47,7 +48,7 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
 
       if (this.logger.isDebugEnabled()) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        this.logger.debug("Got message of type %s: %s", decoded.content, (decoded as any)[decoded.content || ""]);
+        this.logger.debug("Got message of type %s: %s", decoded.content, (decoded as any)[decoded.content ?? ""]);
       }
 
       if (connection.terminal === undefined) {
@@ -67,7 +68,7 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
       terminal = this.createTerminal(decoded);
     } catch (e) {
       this.logger.warn(e);
-      await this.sendProtobufMessage(connection, {
+      await this.send(connection, {
         error: (e instanceof Error) ? e.message : "" + e
       });
       connection.close();
@@ -77,9 +78,9 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
     connection.terminal = terminal;
 
     terminal.on(EVENT_AUDIENCE_COUNT, (c: number) =>
-      this.sendProtobufMessage(connection, {audienceCount: c}));
+      this.send(connection, {audienceCount: c}));
 
-    await this.sendProtobufMessage(connection, {
+    await this.send(connection, {
       acknowledge: {
         expectedPingInterval: RepeaterServer.PING_INTERVAL_MS
       }
@@ -91,17 +92,17 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
       throw new Error("First message was not an init message");
     }
 
-    const sessionName = this.sessionManager.formatSessionName(decoded.init?.session || "");
+    const sessionName = this.sessionManager.formatSessionName(decoded.init?.session ?? "");
     if (sessionName === null) {
       throw new Error("Session name contains invalid characters");
     }
 
     this.logger = this.logger.child({sessionName});
-    const terminal = this.sessionManager.newTerminal(sessionName, decoded.init?.decoration || false);
+    const terminal = this.sessionManager.newTerminal(sessionName, decoded.init?.decoration ?? false);
 
     terminal.handleResizeEvent({
-      width: decoded.init?.size?.width || 80,
-      height: decoded.init?.size?.height || 24
+      width: decoded.init?.size?.width ?? 80,
+      height: decoded.init?.size?.height ?? 24
     });
 
     return terminal;
@@ -114,8 +115,8 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
         break;
       case "resize":
         connection.terminal?.handleResizeEvent({
-          width: decoded.resize?.width || 80,
-          height: decoded.resize?.height || 24,
+          width: decoded.resize?.width ?? 80,
+          height: decoded.resize?.height ?? 24,
         });
         break;
       case "output":
@@ -127,10 +128,10 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
         break;
       case "selection":
         connection.terminal?.handleSelection(
-          decoded.selection?.startRow || -1,
-          decoded.selection?.startColumn || -1,
-          decoded.selection?.endRow || -1,
-          decoded.selection?.endColumn || -1);
+          decoded.selection?.startRow ?? -1,
+          decoded.selection?.startColumn ?? -1,
+          decoded.selection?.endRow ?? -1,
+          decoded.selection?.endColumn ?? -1);
         break;
       default:
         this.logger.warn("Got unknown message of type '%s', ignoring: '%s'",
@@ -146,10 +147,16 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
   }
 
   public async closeConnections(): Promise<void> {
-    return Promise.all(Array.from(this.wsServer.clients).map(async c => {
-      await this.sendProtobufMessage(c, {quit: {}});
-      c.close();
-    })).then();
+    return Promise.all(Array.from(this.wsServer.clients)
+      .map(async c => {
+        try {
+          await this.send(c, {quit: {}});
+          c.close();
+        } catch (_ignored) {
+          // just ignore
+        }
+      }))
+      .then();
   }
 }
 
@@ -165,8 +172,6 @@ export class RepeaterClient extends EventEmitter implements IDisposable {
     private readonly args: IProgramArguments,
     private readonly term: UpdatingTerminal) {
     super();
-    this.on("error", () => { /* don't quit by default */
-    });
   }
 
   public start(): Promise<void> {
@@ -182,7 +187,8 @@ export class RepeaterClient extends EventEmitter implements IDisposable {
       this.connection.on("message", (m: Buffer) => this.handleMessage(m, resolve, reject));
       this.connection.on("open", () => this.init());
       this.connection.on("error", (e) => {
-        this.emit("error", e);
+        this.logger.warn("connection closed");
+        this.emit(EVENT_QUIT);
         reject(e);
       });
     });
@@ -194,7 +200,7 @@ export class RepeaterClient extends EventEmitter implements IDisposable {
         decoration: this.args.decoration,
         session: this.args.presenterSession,
         size: {
-          height: this.args.presenterHeight != 0 ? this.args.presenterHeight : 80,
+          height: this.args.presenterHeight != 0 ? this.args.presenterHeight : 24,
           width: this.args.presenterWidth != 0 ? this.args.presenterWidth : 80,
         },
       }
@@ -202,6 +208,11 @@ export class RepeaterClient extends EventEmitter implements IDisposable {
   }
 
   private send(message: IStreamData): Promise<void> {
+    if (this.connection?.readyState !== WebSocket.OPEN) {
+      this.logger.warn("Don't sending message - socket not open");
+      return Promise.resolve();
+    }
+
     const msg = repeater.StreamData.encode(message).finish();
     return new Promise((resolve, reject) =>
       this.connection?.send(msg, e => e ? reject(e) : resolve()));
@@ -221,7 +232,7 @@ export class RepeaterClient extends EventEmitter implements IDisposable {
     if (!this.connected) {
       switch (feedback.content) {
         case "acknowledge":
-          this.expectedPingInterval = feedback.acknowledge?.expectedPingInterval || 0;
+          this.expectedPingInterval = feedback.acknowledge?.expectedPingInterval ?? 0;
           this.connected = true;
           this.attachTerminal();
           resolve();
@@ -236,14 +247,14 @@ export class RepeaterClient extends EventEmitter implements IDisposable {
       switch (feedback.content) {
         case "error":
           this.logger.error("Server error: %s", feedback.error);
-          this.emit("error", feedback.error);
+          this.emit(EVENT_QUIT);
           break;
         case "quit":
           this.logger.warn("Server closed the connection gracefully");
           this.emit(EVENT_QUIT);
           break;
         case "audienceCount":
-          this.term.setAudienceCount(feedback.audienceCount || 0);
+          this.term.setAudienceCount(feedback.audienceCount ?? 0);
           break;
         default:
           this.logger.warn("Got an unexpected answer");
@@ -259,8 +270,12 @@ export class RepeaterClient extends EventEmitter implements IDisposable {
   }
 
   private ping() {
+    if (this.expectedPingInterval === 0) return;
+
     if (this.pingTimeout) clearTimeout(this.pingTimeout);
     this.pingTimeout = setTimeout(() => {
+      this.logger.error("Ping timeout - terminating connection");
+      this.emit("quit", new Quit());
       this.connection?.terminate();
     }, this.expectedPingInterval + 1000);
   }

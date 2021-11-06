@@ -10,7 +10,7 @@ class Application extends BaseApplication {
   connected(): void {
     super.connected();
 
-    const name = window.location.pathname.replace(/^.*\//, "") || "default";
+    const name = window.location.pathname.replace(/^.*\//, "") ?? "default";
     const message = web.AudienceClientMessage.create({
       startAudience: name
     });

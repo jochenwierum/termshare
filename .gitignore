@@ -1,5 +1,8 @@
-.tmp
 .idea
 test
 node_modules
 dist
+.ts-buildcache
+
+build.sh
+share.sh

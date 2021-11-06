@@ -20,62 +20,59 @@ const setupLogging = (silent: boolean) => {
   }
 };
 
-class ShutdownHandler {
-  private readonly closeCallbacks: IDisposable[];
-
-  constructor(
-    private readonly repeaterClient: RepeaterClient | null,
-    private readonly proc: Process | null,
+function run(
+    repeaterClient: RepeaterClient | null,
+    proc: Process | null,
     ...closeCallbacks: IDisposable[]) {
-    this.proc = proc;
-    this.repeaterClient = repeaterClient;
-    this.closeCallbacks = closeCallbacks;
     if (repeaterClient) closeCallbacks.push(repeaterClient);
-  }
 
-  public async handleShutdown() {
-    return await new Promise((resolve) => {
       const sigIntHandler = async () => {
         process.off("SIGINT", sigIntHandler);
-        if (this.proc) {
+        process.off("SIGHUP", sigIntHandler);
+        if (proc) {
           rootLogger.warn("Closing process - press again to force quit");
-          await this.proc.close();
+          await proc.close();
         } else {
+          rootLogger.info("Received signal to quit process");
           closeAll();
         }
       };
+
       process.on("SIGINT", sigIntHandler);
+      process.on("SIGHUP", sigIntHandler);
 
       const closeAll = () => {
-        this.closeCallbacks.forEach(cb => cb.close());
-        resolve(true);
+        closeCallbacks.forEach(async cb => {
+          try {
+            await cb.close();
+          } catch (_ignored) {
+            // just shutdown the rest
+          }
+        });
       };
 
-      if (this.proc) {
-        if (this.repeaterClient) {
-          this.repeaterClient.on(EVENT_QUIT, () => this.proc?.close());
-          this.repeaterClient.on("error", () => this.proc?.close());
+      if (proc) {
+        if (repeaterClient) {
+          repeaterClient.on(EVENT_QUIT, () => proc.close());
         }
 
-        this.proc.on(EVENT_QUIT, () => {
+        proc.on(EVENT_QUIT, () => {
           rootLogger.warn("Process quit - shutting down servers");
           closeAll();
         });
       }
-    });
-  }
 }
 
-const termshareAudience = (): ShutdownHandler => {
+const termshareAudience = () => {
   const sessionManager = new RemoteSessionManager();
   const repeaterServer = new RepeaterServer(sessionManager, args);
   const audienceServer = new Audience(sessionManager, args);
 
-  return new ShutdownHandler(null, null, repeaterServer, audienceServer);
+  run(null, null, repeaterServer, audienceServer);
 };
 
 
-const termsharePresenterConsole = async (): Promise<ShutdownHandler> => {
+const termsharePresenterConsole = async () => {
   const wrappedProcess = new Process(args);
   const terminal = new UncachedTerminal(wrappedProcess);
   const repeaterClient = new RepeaterClient(args, terminal);
@@ -91,10 +88,10 @@ const termsharePresenterConsole = async (): Promise<ShutdownHandler> => {
   setupLogging(true);
   wrappedProcess.start();
 
-  return new ShutdownHandler(repeaterClient, wrappedProcess);
+  run(repeaterClient, wrappedProcess);
 };
 
-const termsharePresenterWeb = async (): Promise<ShutdownHandler> => {
+const termsharePresenterWeb = async () => {
   const wrappedProcess = new Process(args);
   const terminal = new CachingTerminal("presenter", args.decoration, wrappedProcess);
   const repeaterClient = new RepeaterClient(args, terminal);
@@ -111,10 +108,10 @@ const termsharePresenterWeb = async (): Promise<ShutdownHandler> => {
 
   wrappedProcess.start();
 
-  return new ShutdownHandler(repeaterClient, wrappedProcess, presenterServer);
+  run(repeaterClient, wrappedProcess, presenterServer);
 };
 
-const termshareCombinedConsole = (): ShutdownHandler => {
+const termshareCombinedConsole = () => {
   const wrappedProcess = new Process(args);
   const terminal = new CachingTerminal("presenter", args.decoration, wrappedProcess);
   const sessionManager = new LocalSessionManager(wrappedProcess, args, terminal);
@@ -123,10 +120,10 @@ const termshareCombinedConsole = (): ShutdownHandler => {
   setupLogging(true);
   wrappedProcess.start();
 
-  return new ShutdownHandler(null, wrappedProcess, audienceServer);
+  run(null, wrappedProcess, audienceServer);
 };
 
-const termshareCombinedWeb = (): ShutdownHandler => {
+const termshareCombinedWeb = () => {
   const wrappedProcess = new Process(args);
   const terminal = new CachingTerminal("presenter", args.decoration, wrappedProcess);
   const sessionManager = new LocalSessionManager(wrappedProcess, args, terminal);
@@ -135,33 +132,27 @@ const termshareCombinedWeb = (): ShutdownHandler => {
 
   wrappedProcess.start();
 
-  return new ShutdownHandler(null, wrappedProcess, audienceServer, presenterServer);
+  run(null, wrappedProcess, audienceServer, presenterServer);
 };
 
 const main = async () => {
-  let shutdownHandler: ShutdownHandler | null = null;
-
   setupLogging(false);
 
   if (args.mode == Mode.repeater) {
-    shutdownHandler = termshareAudience();
+    termshareAudience();
   } else if (args.mode == Mode.presenter && args.presenterInput == PresenterInput.console) {
-    shutdownHandler = await termsharePresenterConsole();
+    await termsharePresenterConsole();
   } else if (args.mode == Mode.presenter && args.presenterInput == PresenterInput.web) {
-    shutdownHandler = await termsharePresenterWeb();
+    await termsharePresenterWeb();
   } else if (args.mode == Mode.combined && args.presenterInput == PresenterInput.console) {
-    shutdownHandler = termshareCombinedConsole();
+    termshareCombinedConsole();
   } else if (args.mode == Mode.combined && args.presenterInput == PresenterInput.web) {
-    shutdownHandler = termshareCombinedWeb();
+    termshareCombinedWeb();
   }
-
-  if (shutdownHandler)
-    await shutdownHandler.handleShutdown();
 };
 
-export default () => main().catch(
-  e => {
+export default () => main()
+  .catch(e => {
     console.error("Unhandled fatal error in main routine:", e);
     process.exit(1);
-  }
-);
+  });

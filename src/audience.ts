@@ -28,7 +28,7 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
   constructor(
     private readonly sessionManager: ISessionManager,
     args: IProgramArguments) {
-    super(args.audienceBind, args, "ws-audience");
+    super(args.audienceBind, args, "audience");
   }
 
   protected marshalMessage(message: web.IServerMessage) {
@@ -65,7 +65,7 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
       if (this.logger.isDebugEnabled()) {
         this.logger.debug("Got message of type %s: %s",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          decoded.content, (decoded as any)[decoded.content || ""], {sessionName: connection.session});
+          decoded.content, (decoded as any)[decoded.content ?? ""], {sessionName: connection.session});
       }
 
       if (firstMessage) {
@@ -91,14 +91,14 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
     return this.mutex.runExclusive(async () => {
       const sessionName = this.sessionManager.formatSessionName(requestedSessionName);
       if (sessionName === null) {
-        return this.sendProtobufMessage(connection, {
+        return this.send(connection, {
           error: "Invalid session name"
         });
       }
 
       const terminal = this.sessionManager.getTerminal(sessionName);
       if (terminal === null) {
-        return this.sendProtobufMessage(connection, {
+        return this.send(connection, {
           error: "The specified session does not exist"
         });
       }
@@ -127,7 +127,7 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
       return terminal.mutex.runExclusive(async () => {
         const output = (await Promise.all([
           terminal.dumpTerminal(false),
-          this.sendProtobufMessage(connection, {
+          this.send(connection, {
             init: {
               size: {
                 height: terminal.getHeight(),
@@ -139,8 +139,8 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
             }
           })])) [0];
 
-        await this.sendProtobufMessage(connection, {output});
-        await this.sendProtobufMessage(connection, {
+        await this.send(connection, {output});
+        await this.send(connection, {
           selection: terminal.getSelection()
         });
       });
@@ -186,10 +186,10 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
 
       const bytes = this.marshalMessage(message);
 
-      return (session?.connections || [])
+      return (session?.connections ?? [])
         .map(connection =>
           () => session.mutex.runExclusive(() =>
-            this.sendToSocket(connection, bytes).catch()
+            this.sendRaw(connection, bytes).catch()
           ));
     }).then((fns) => {
       if (fns) {
@@ -205,7 +205,7 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
       const sessionName = connection.session;
       if (!sessionName) return;
 
-      const connections = this.sessions.get(sessionName)?.connections || [];
+      const connections = this.sessions.get(sessionName)?.connections ?? [];
       connections.splice(connections.indexOf(connection), 1);
 
       const sessionCount = connections.length;
