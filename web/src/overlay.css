@@ -1,0 +1,43 @@
+.overlay-container {
+    position: relative;
+}
+
+.overlay {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+
+    background-color: rgba(0, 0, 0, 0.85);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.overlay-inner {
+    color: #fff;
+    background-color: #000;
+    border: 16px solid #000;
+    border-radius: 16px;
+    padding: 8px;
+
+    font-size: 200%;
+}
+
+.overlay-inner a,
+.overlay-inner a:link,
+.overlay-inner a:active,
+.overlay-inner a:hover,
+.overlay-inner a:visited {
+    display: block;
+    margin-top: 16px;
+    text-decoration: underline;
+    color: #fff;
+    font-weight: bold;
+}
+
+.overlay-hidden {
+    display: none;
+}

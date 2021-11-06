@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+import "web.proto";
+
+package repeater;
+
+message StreamData {
+  oneof content {
+    Init init = 1;
+    bytes output = 2;
+    web.Resize resize = 3;
+    web.Selection selection = 4;
+  }
+}
+
+message Init {
+  string session = 1;
+  web.Resize size = 2;
+  bool decoration = 3;
+}
+
+message StreamFeedback {
+  oneof content {
+    string error = 1;
+    uint32 audienceCount = 2;
+    web.Empty quit = 3;
+    Acknowledge acknowledge = 4;
+  }
+}
+
+message Acknowledge {
+  uint32 expectedPingInterval = 1;
+}
+

@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package web;
+
+message AudienceClientMessage {
+  oneof content {
+    string startAudience = 1;
+  }
+}
+
+message PresenterClientMessage {
+  oneof content {
+    Empty requestPresenter = 1;
+    Resize presenterResize = 2;
+    bytes presenterStdin = 3;
+    Selection selection = 4;
+  }
+}
+
+message ServerMessage {
+  oneof content {
+    string error = 1;
+    Init init = 2;
+    bytes output = 3;
+    Resize resize = 4;
+    Empty blocked = 5;
+    Selection selection = 6;
+    int32 audienceCount = 7;
+  }
+}
+
+message Init {
+  Resize size = 1;
+  bool decoration = 2;
+  string font = 3;
+  uint32 expectedPingInterval = 4;
+}
+
+message Resize {
+  uint32 width = 1;
+  uint32 height = 2;
+}
+
+message Selection {
+  int32 startColumn = 1;
+  int32 startRow = 2;
+  int32 endColumn = 3;
+  int32 endRow = 4;
+}
+
+message Empty {}

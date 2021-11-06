@@ -1,0 +1,19 @@
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+
+}
+
+#main.presenter {
+    width: 100vw;
+    height: 100vh;
+}
+
+#main.audience {
+    min-width: 100vw;
+    min-height: 100vh;
+}

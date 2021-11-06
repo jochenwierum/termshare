@@ -1,0 +1,70 @@
+html {
+    --decoration-width: 5px;
+    --decoration-border-width: 2px;
+    --decoration-border-color: #222;
+}
+
+.window-outer.decorated {
+    padding: calc(var(--decoration-width) + 2px) calc(var(--decoration-width) + 10px) calc(var(--decoration-width) + 10px) calc(var(--decoration-width) + 2px);
+}
+
+.window, .console, .title {
+    display: inline-block;
+}
+
+.window-outer, .window.maximise, .console.maximise, .console-inner {
+    height: 100%;
+    width: 100%;
+}
+
+.window-outer, .console.maximise {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.window {
+    display: inline-flex;
+    flex-direction: column;
+    background-color: #000;
+}
+
+.window.maximise {
+    display: flex;
+}
+
+.window.decorated {
+    box-shadow: 5px 5px calc(var(--decoration-width) + 5px);
+}
+
+.console.decorated {
+    border-color: var(--decoration-border-color);
+    border-style: solid;
+    border-bottom-width: var(--decoration-border-width);
+    border-left-width: var(--decoration-border-width);
+    border-right-width: var(--decoration-border-width);
+    border-top-width: 0;
+
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.title {
+    padding: 3px;
+    background-color: #555;
+    color: #fff;
+
+    border-color: var(--decoration-border-color);
+    border-style: solid;
+    border-top-width: var(--decoration-border-width);
+    border-left-width: var(--decoration-border-width);
+    border-right-width: var(--decoration-border-width);
+    border-bottom-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 80%;
+}

@@ -1,0 +1,22 @@
+{
+  "include": ["src/**/*.ts", "../gen/*.js", "../gen/*.d.ts"],
+  "compilerOptions": {
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "checkJs": false,
+    "declaration": true,
+    "esModuleInterop": true,
+    "declarationMap": false,
+    "downlevelIteration": true,
+    "importHelpers": true,
+    "lib": ["DOM", "ES6"],
+    "module": "CommonJS",
+    "outDir": ".tmp/tsc",
+    "removeComments": true,
+    "rootDir": ".",
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES6"
+  }
+}

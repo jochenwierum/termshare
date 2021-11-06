@@ -1,0 +1,53 @@
+{
+  "name": "termshare",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "build:protobuf": "npx pbjs -I proto --target static-module --wrap commonjs --out src/proto/web.js src/proto/web.proto && npx pbjs -I proto --target static-module --wrap commonjs --out src/proto/repeater.js src/proto/repeater.proto && mkdir -p dist/proto/ && cp src/proto/*.js dist/proto/ && npx pbts --out src/proto/web.d.ts src/proto/web.js && npx pbts --out src/proto/repeater.d.ts src/proto/repeater.js",
+    "build:web": "cd web && npm run build",
+    "build:tsc": "tsc",
+    "build": "npm run build:protobuf && npm run build:tsc && npm run build:web",
+    "lint": "eslint src --ext .ts",
+    "lint-and-fix": "eslint src --ext .ts --fix",
+    "ncu": "npx npm-check-updates",
+    "dev": "npx ts-node src/run-develop.ts"
+  },
+  "author": "Jochen Wierum <jochen@jowisoftware.de>",
+  "license": "MIT",
+  "dependencies": {
+    "@types/express": "^4.17.13",
+    "@types/ws": "^8.2.0",
+    "async-mutex": "^0.3.2",
+    "command-line-args": "^5.2.0",
+    "command-line-usage": "^6.1.1",
+    "express": "^4.17.1",
+    "express-static-gzip": "^2.1.1",
+    "node-pty": "^0.10.1",
+    "ts-node": "^10.3.0",
+    "tslib": "^2.3.1",
+    "winston": "^3.3.3",
+    "ws": "^8.2.3",
+    "xterm-addon-serialize": "^0.6.0",
+    "xterm-headless": "^4.14.1"
+  },
+  "devDependencies": {
+    "@types/command-line-args": "^5.2.0",
+    "@types/command-line-usage": "^5.0.2",
+    "@typescript-eslint/eslint-plugin": "^5.1.0",
+    "@typescript-eslint/parser": "^5.1.0",
+    "eslint": "^7.32.0",
+    "npm-check-updates": "^11.1.1",
+    "protobufjs": "~6.11.2"
+  },
+  "optionalDependencies": {
+    "bufferutil": "^4.0.5"
+  },
+  "files": [
+    "lib",
+    "bin"
+  ],
+  "bin": {
+    "termshare": "./bin/index.js"
+  }
+}
