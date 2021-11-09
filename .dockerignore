@@ -1,7 +1,9 @@
+.git
 .idea
 test
-node_modules
+**/node_modules
 dist
 .ts-buildcache
+web/.tmp
 
 share.sh

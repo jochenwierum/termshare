@@ -111,6 +111,14 @@ export abstract class WebSocketServer<M> implements IDisposable {
 
     await this.closeConnections();
 
+    this.wsServer.clients.forEach(c => {
+      try {
+        c.close();
+      } catch (_ignored) {
+        c.terminate();
+      }
+    });
+
     return new Promise(resolve => {
       this.server?.close(err => {
         if (err) {

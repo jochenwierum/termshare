@@ -153,7 +153,7 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
           await this.send(c, {quit: {}});
           c.close();
         } catch (_ignored) {
-          // just ignore
+          c.terminate();
         }
       }))
       .then();

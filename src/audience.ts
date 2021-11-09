@@ -71,8 +71,9 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
       if (firstMessage) {
         firstMessage = false;
         if (decoded.content !== "startAudience" || !decoded.startAudience) {
-          this.logger.warn("Unknown client init message, dropping connection",
-            {sessionName: connection.session});
+          this.logger.warn("Unknown client init message ('%s'), dropping connection",
+            decoded.content, {sessionName: connection.session});
+          this.logger.warn(JSON.stringify(decoded));
           connection.close();
         } else {
           await this.startClient(connection, decoded.startAudience);
@@ -235,5 +236,4 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
       this.sessions.clear();
     });
   }
-
 }

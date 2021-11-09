@@ -36,6 +36,24 @@ export interface IProgramArguments {
   repeaterBind: string;
 }
 
+interface IRawProgramArguments {
+  "audience-bind": string;
+  "custom-css-dir": string | null;
+  decoration: boolean;
+  debug: boolean;
+  "font-family": string | null;
+  "kill-signal": string;
+  mode: Mode;
+  "presenter-bind": string;
+  "presenter-command": IPresenterCommand;
+  "presenter-height": number;
+  "presenter-input": PresenterInput;
+  "presenter-session": string;
+  "presenter-width": number;
+  "repeater-server": string;
+  "repeater-bind": string;
+}
+
 interface IInternalArguments {
   help: boolean;
   _unknown: string[];
@@ -49,7 +67,7 @@ const optionDefinitions: OptionDefinition[] = [
     group: "general"
   },
   {
-    name: "audienceBind",
+    name: "audience-bind",
     alias: "a",
     defaultValue: ":8080",
     description: "Where to bind the audience port to.\nDefault: :8080",
@@ -57,7 +75,7 @@ const optionDefinitions: OptionDefinition[] = [
     group: ["repeater", "combined"]
   },
   {
-    name: "customCssDir",
+    name: "custom-css-dir",
     alias: "c",
     defaultValue: null,
     description: "A directory which will be available as /_custom/ in the embedded http servers.\nMust include a file named custom.css.",
@@ -81,7 +99,7 @@ const optionDefinitions: OptionDefinition[] = [
     typeLabel: "{underline true|false}",
   },
   {
-    name: "fontFamily",
+    name: "font-family",
     alias: "f",
     defaultValue: null,
     description: "The font family to use in the web.\nMay require to define a @font-face rule in custom.css.",
@@ -89,7 +107,7 @@ const optionDefinitions: OptionDefinition[] = [
     group: ["repeater", "combined"]
   },
   {
-    name: "killSignal",
+    name: "kill-signal",
     alias: "k",
     defaultValue: "SIGHUP",
     description: "Signal that will be sent to exit the presented application\nDefault: SIGHUP",
@@ -105,7 +123,7 @@ const optionDefinitions: OptionDefinition[] = [
     typeLabel: "{underline combined|presenter|repeater}",
   },
   {
-    name: "presenterBind",
+    name: "presenter-bind",
     alias: "b",
     defaultValue: "127.0.0.1:8081",
     description: "Where to bind the presenter port to.\nDefault: 127.0.0.1:8081",
@@ -113,7 +131,7 @@ const optionDefinitions: OptionDefinition[] = [
     group: ["repeater", "combined"]
   },
   {
-    name: "presenterHeight",
+    name: "presenter-height",
     alias: "h",
     defaultValue: 0,
     type: (value: string) => {
@@ -125,7 +143,7 @@ const optionDefinitions: OptionDefinition[] = [
     group: "web"
   },
   {
-    name: "presenterInput",
+    name: "presenter-input",
     alias: "i",
     type: (value: string) => PresenterInput[value as keyof typeof PresenterInput],
     defaultValue: PresenterInput.console,
@@ -134,7 +152,7 @@ const optionDefinitions: OptionDefinition[] = [
     group: ["presenter", "combined"]
   },
   {
-    name: "presenterSession",
+    name: "presenter-session",
     alias: "s",
     type: String,
     defaultValue: null,
@@ -143,7 +161,7 @@ const optionDefinitions: OptionDefinition[] = [
     group: "presenter"
   },
   {
-    name: "presenterWidth",
+    name: "presenter-width",
     alias: "w",
     type: (value: string) => {
       const parsed = Number(value);
@@ -155,7 +173,7 @@ const optionDefinitions: OptionDefinition[] = [
     group: "web"
   },
   {
-    name: "repeaterServer",
+    name: "repeater-server",
     alias: "r",
     defaultValue: "127.0.0.1:8082",
     description: "Address of repeater application.\nDefault: 127.0.0.1:8082",
@@ -163,7 +181,7 @@ const optionDefinitions: OptionDefinition[] = [
     group: "presenter"
   },
   {
-    name: "repeaterBind",
+    name: "repeater-bind",
     alias: "p",
     defaultValue: "127.0.0.1:8082",
     description: "Where to listen for presenter connections.\nDefault: 127.0.0.1:8082",
@@ -210,28 +228,28 @@ const fail = (msg: string | null) => {
 
 export const parseArguments: () => IProgramArguments = () => {
   const parsed = commandLineArgs(optionDefinitions, {stopAtFirstUnknown: true});
-  const args = parsed._all as IProgramArguments & IInternalArguments;
+  const args = parsed._all as IRawProgramArguments & IInternalArguments;
 
   if (args.help)
     fail(null);
 
   if (!args.mode)
     fail("Unknown mode: " + args.mode);
-  if (args.mode !== Mode.repeater && !args.presenterInput)
-    fail("Unknown presenterInput: " + args.presenterInput);
+  if (args.mode !== Mode.repeater && !args["presenter-input"])
+    fail("Unknown presenterInput: " + args["presenter-input"]);
 
-  if (args.mode === Mode.presenter && (!args.presenterSession || !args.presenterSession.match("^[a-zA-Z0-9-_+]+$")))
+  if (args.mode === Mode.presenter && (!args["presenter-session"] || !args["presenter-session"].match("^[a-zA-Z0-9-_+]+$")))
     fail("Presenter session name is required");
 
-  if (args.presenterHeight && args.presenterHeight < 0)
+  if (args["presenter-height"] && args["presenter-height"] < 0)
     fail("presenterHeight must be a positive integer");
-  if (args.presenterWidth && args.presenterWidth < 0)
+  if (args["presenter-width"] && args["presenter-width"] < 0)
     fail("presenterWidth must be a positive integer");
-  if ((args.presenterWidth === 0) != (args.presenterHeight === 0))
+  if ((args["presenter-width"] === 0) != (args["presenter-height"] === 0))
     fail("presenterHeight and presenterWidth must be set together");
 
 
-  if (args.mode === Mode.presenter && !args.repeaterServer)
+  if (args.mode === Mode.presenter && !args["repeater-server"])
     fail("Repeater address is missing");
 
   let cmd: string;
@@ -243,14 +261,28 @@ export const parseArguments: () => IProgramArguments = () => {
     cmdArgs = parsed._unknown.slice(1);
   }
 
-  if (args.customCssDir && !fs.existsSync(args.customCssDir))
+  if (args["custom-css-dir"] && !fs.existsSync(args["custom-css-dir"]))
     fail("Provided CSS directory does not exist or does not contain a custom.css");
 
   return {
-    ...args,
+    audienceBind: args["audience-bind"],
+    customCssDir: args["custom-css-dir"],
+    decoration: args.decoration,
+    debug: args.debug,
+    fontFamily: args["font-family"],
+    killSignal: args["kill-signal"],
+    mode: args.mode,
+    presenterBind: args["presenter-bind"],
+    presenterHeight: args["presenter-height"],
+    presenterInput: args["presenter-input"],
+    presenterSession: args["presenter-session"],
+    presenterWidth: args["presenter-width"],
+    repeaterServer: args["repeater-server"],
+    repeaterBind: args["repeater-bind"],
+
     presenterCommand: {
       cmd: cmd as string,
       args: cmdArgs as string[]
-    } as IPresenterCommand,
-  } as IProgramArguments;
+    },
+  };
 };
