@@ -24,6 +24,9 @@ COPY --from=build /app/dist/ ./dist/
 COPY --from=build /app/bin/ ./bin/
 COPY --from=build /app/ /app/package.json /app/package-lock.json ./
 
+ENV TERMSHARE_MODE repeater
+ENV TERMSHARE_REPEATER_BIND 0.0.0.0:8082
+
 USER 65534
 ENTRYPOINT ["node", "bin/index.js"]
-CMD ["--help"]
+CMD []

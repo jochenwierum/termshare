@@ -59,6 +59,21 @@ interface IInternalArguments {
   _unknown: string[];
 }
 
+// eslint-disable-next-line
+function defaultValue<T>(name: string, fallbackValue: T, convert: (v: string) => T = v => v as unknown as T): T {
+  const v = process.env["TERMSHARE_" + name.toUpperCase().replace(/-/g, "_")];
+  if (v) {
+    return convert(v);
+  } else {
+    return fallbackValue;
+  }
+}
+
+const parseWidthOrHeight = (value: string) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : -1;
+};
+
 const optionDefinitions: OptionDefinition[] = [
   {
     name: "help",
@@ -69,15 +84,15 @@ const optionDefinitions: OptionDefinition[] = [
   {
     name: "audience-bind",
     alias: "a",
-    defaultValue: ":8080",
-    description: "Where to bind the audience port to.\nDefault: :8080",
+    defaultValue: defaultValue("audience-bind", ":8080"),
+    description: "Where to bind the audience port to.\nDefaults to :8080",
     typeLabel: "{underline bind-address}",
     group: ["repeater", "combined"]
   },
   {
     name: "custom-css-dir",
     alias: "c",
-    defaultValue: null,
+    defaultValue: defaultValue("custom-css-dir", null as null | string),
     description: "A directory which will be available as /_custom/ in the embedded http servers.\nMust include a file named custom.css.",
     typeLabel: "{underline directory}",
     group: ["repeater", "combined"]
@@ -86,7 +101,7 @@ const optionDefinitions: OptionDefinition[] = [
     name: "decoration",
     alias: "d",
     type: Boolean,
-    defaultValue: false,
+    defaultValue: defaultValue("decoration", false, v => v.toLowerCase() === "false"),
     description: "Draw a decoration (includes window title)",
     typeLabel: "{underline true|false}",
     group: ["combined", "presenter"]
@@ -94,23 +109,23 @@ const optionDefinitions: OptionDefinition[] = [
   {
     name: "debug",
     type: Boolean,
-    defaultValue: false,
+    defaultValue: defaultValue("debug", false, v => v.toLowerCase() === "false"),
     description: "Debug logging",
-    typeLabel: "{underline true|false}",
+    typeLabel: "{underline true|false}"
   },
   {
     name: "font-family",
     alias: "f",
-    defaultValue: null,
-    description: "The font family to use in the web.\nMay require to define a @font-face rule in custom.css.",
+    defaultValue: defaultValue("font-family", null as null | string),
+    description: "The font family to use in the web.\nMay require to define @font-face rules in custom.css.",
     typeLabel: "{underline string}",
     group: ["repeater", "combined"]
   },
   {
     name: "kill-signal",
     alias: "k",
-    defaultValue: "SIGHUP",
-    description: "Signal that will be sent to exit the presented application\nDefault: SIGHUP",
+    defaultValue: defaultValue("kill-signal", "SIGHUP"),
+    description: "Signal that will be sent to exit the presented application\nDefaults to SIGHUP",
     typeLabel: "{underline signal-name}",
     group: ["presenter", "combined"]
   },
@@ -118,27 +133,24 @@ const optionDefinitions: OptionDefinition[] = [
     name: "mode",
     type: (value: string) => Mode[value as keyof typeof Mode],
     alias: "m",
-    defaultValue: Mode.combined,
-    description: "Application mode.\nDefault: combined",
+    defaultValue: defaultValue("mode", Mode.combined, v => Mode[v as keyof typeof Mode]),
+    description: "Application mode.\nDefaults to combined",
     typeLabel: "{underline combined|presenter|repeater}",
   },
   {
     name: "presenter-bind",
     alias: "b",
-    defaultValue: "127.0.0.1:8081",
-    description: "Where to bind the presenter port to.\nDefault: 127.0.0.1:8081",
+    defaultValue: defaultValue("presenter-bind", "127.0.0.1:8081"),
+    description: "Where to bind the presenter port to.\nDefaults to 127.0.0.1:8081",
     typeLabel: "{underline bind-address}",
     group: ["repeater", "combined"]
   },
   {
     name: "presenter-height",
+    type: parseWidthOrHeight,
     alias: "h",
-    defaultValue: 0,
-    type: (value: string) => {
-      const parsed = Number(value);
-      return !Number.isInteger(parsed) || parsed < 0;
-    },
-    description: "Terminal with (0 = auto resize). Must be set if presenterHeight is set.\nDefault: 0",
+    defaultValue: defaultValue("presenter-height", 0, parseWidthOrHeight),
+    description: "Terminal with (0 = auto resize). Must be set if presenterHeight is set.\nDefaults to 0",
     typeLabel: "{underline integer}",
     group: "web"
   },
@@ -146,8 +158,9 @@ const optionDefinitions: OptionDefinition[] = [
     name: "presenter-input",
     alias: "i",
     type: (value: string) => PresenterInput[value as keyof typeof PresenterInput],
-    defaultValue: PresenterInput.console,
-    description: "Which input to use.\nDefault: console",
+    defaultValue: defaultValue("presenter-input", PresenterInput.console,
+      (value: string) => PresenterInput[value as keyof typeof PresenterInput]),
+    description: "Which input to use.\nDefaults to console",
     typeLabel: "{underline console|web}",
     group: ["presenter", "combined"]
   },
@@ -155,7 +168,7 @@ const optionDefinitions: OptionDefinition[] = [
     name: "presenter-session",
     alias: "s",
     type: String,
-    defaultValue: null,
+    defaultValue: defaultValue("presenter-session", null as null | string),
     description: "{bold Required.}\nName of the session.",
     typeLabel: "{underline string}",
     group: "presenter"
@@ -163,28 +176,25 @@ const optionDefinitions: OptionDefinition[] = [
   {
     name: "presenter-width",
     alias: "w",
-    type: (value: string) => {
-      const parsed = Number(value);
-      return !Number.isInteger(parsed) || parsed < 0;
-    },
-    defaultValue: 0,
-    description: "Terminal with (0 = auto resize). Must be set if presenterHeight is set.\nDefault: 0",
+    type: parseWidthOrHeight,
+    defaultValue: defaultValue("presenter-width", 0, parseWidthOrHeight),
+    description: "Terminal with (0 = auto resize). Must be set if presenterHeight is set.\nDefaults to 0",
     typeLabel: "{underline integer}",
     group: "web"
   },
   {
     name: "repeater-server",
     alias: "r",
-    defaultValue: "127.0.0.1:8082",
-    description: "Address of repeater application.\nDefault: 127.0.0.1:8082",
+    defaultValue: defaultValue("repeater-server", "127.0.0.1:8082"),
+    description: "Address of repeater application.\nDefaults to 127.0.0.1:8082",
     typeLabel: "{underline address}",
     group: "presenter"
   },
   {
     name: "repeater-bind",
     alias: "p",
-    defaultValue: "127.0.0.1:8082",
-    description: "Where to listen for presenter connections.\nDefault: 127.0.0.1:8082",
+    defaultValue: defaultValue("repeater-bind", "127.0.0.1:8082"),
+    description: "Where to listen for presenter connections.\nDefaults to 127.0.0.1:8082",
     typeLabel: "{underline bind-address}",
     group: "repeater"
   }
@@ -192,35 +202,50 @@ const optionDefinitions: OptionDefinition[] = [
 
 const fail = (msg: string | null) => {
   if (msg) console.error(msg);
+
+  const content = `Share your terminal session over HTTP.
+
+  Usage:
+  termshare [options] [command [arguments...]]
+
+  If no command is provided, $SHELL is used.
+  
+  You can also set each option with environment variables, e.g. TERMSHARE_PRESENTER_INPUT for --presenter-input. `;
+
   console.error(commandLineUsage([
     {
       header: "Termshare",
-      content: "Share your terminal session over HTTP."
+      content
     },
     {
       header: "General Options",
       optionList: optionDefinitions,
-      group: "_none"
+      group: "_none",
+      reverseNameOrder: true
     },
     {
       header: "Options for mode 'combined'",
       optionList: optionDefinitions,
-      group: "combined"
+      group: "combined",
+      reverseNameOrder: true
     },
     {
       header: "Options for mode 'presenter'",
       optionList: optionDefinitions,
-      group: "presenter"
+      group: "presenter",
+      reverseNameOrder: true
     },
     {
       header: "Options for mode 'repeater'",
       optionList: optionDefinitions,
-      group: "repeater"
+      group: "repeater",
+      reverseNameOrder: true
     },
     {
       header: "Options for input type 'web'",
       optionList: optionDefinitions,
-      group: "web"
+      group: "web",
+      reverseNameOrder: true
     },
   ]));
   process.exit(1);

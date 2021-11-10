@@ -2,8 +2,8 @@ import {Mode, parseArguments, PresenterInput} from "./argumentParser";
 import {EVENT_QUIT, IDisposable} from "./types";
 import {rootLogger, setupLogger} from "./logger";
 import Process from "./process";
-import {CachingTerminal, UncachedTerminal} from "./terminal";
-import {LocalSessionManager, RemoteSessionManager} from "./sessionManager";
+import {DumpableTerminal, UncachedTerminal} from "./terminal";
+import {SingleSessionManager, MultipleSessionManager} from "./sessionManager";
 import Audience from "./audience";
 import Presenter from "./presenter";
 import {RepeaterClient, RepeaterServer} from "./repeater";
@@ -64,7 +64,7 @@ function run(
 }
 
 const termshareAudience = () => {
-  const sessionManager = new RemoteSessionManager();
+  const sessionManager = new MultipleSessionManager();
   const repeaterServer = new RepeaterServer(sessionManager, args);
   const audienceServer = new Audience(sessionManager, args);
 
@@ -93,9 +93,9 @@ const termsharePresenterConsole = async () => {
 
 const termsharePresenterWeb = async () => {
   const wrappedProcess = new Process(args);
-  const terminal = new CachingTerminal("presenter", args.decoration, wrappedProcess);
+  const terminal = new DumpableTerminal("presenter", args.decoration, wrappedProcess);
   const repeaterClient = new RepeaterClient(args, terminal);
-  const sessionManager = new LocalSessionManager(wrappedProcess, args, terminal);
+  const sessionManager = new SingleSessionManager(wrappedProcess, args, terminal);
   const presenterServer = new Presenter(sessionManager, wrappedProcess, args);
 
   try {
@@ -113,8 +113,8 @@ const termsharePresenterWeb = async () => {
 
 const termshareCombinedConsole = () => {
   const wrappedProcess = new Process(args);
-  const terminal = new CachingTerminal("presenter", args.decoration, wrappedProcess);
-  const sessionManager = new LocalSessionManager(wrappedProcess, args, terminal);
+  const terminal = new DumpableTerminal("presenter", args.decoration, wrappedProcess);
+  const sessionManager = new SingleSessionManager(wrappedProcess, args, terminal);
   const audienceServer = new Audience(sessionManager, args);
 
   setupLogging(true);
@@ -125,8 +125,8 @@ const termshareCombinedConsole = () => {
 
 const termshareCombinedWeb = () => {
   const wrappedProcess = new Process(args);
-  const terminal = new CachingTerminal("presenter", args.decoration, wrappedProcess);
-  const sessionManager = new LocalSessionManager(wrappedProcess, args, terminal);
+  const terminal = new DumpableTerminal("presenter", args.decoration, wrappedProcess);
+  const sessionManager = new SingleSessionManager(wrappedProcess, args, terminal);
   const presenterServer = new Presenter(sessionManager, wrappedProcess, args);
   const audienceServer = new Audience(sessionManager, args);
 

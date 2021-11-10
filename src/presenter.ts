@@ -3,7 +3,7 @@ import {IProgramArguments} from "./argumentParser";
 import {ISessionManager} from "./sessionManager";
 import Process from "./process";
 import {EVENT_AUDIENCE_COUNT, EVENT_OUTPUT, Output} from "./types";
-import {CachingTerminal} from "./terminal";
+import {DumpableTerminal} from "./terminal";
 import {web} from "./proto/web";
 import {WebSocket} from "ws";
 import {Mutex} from "async-mutex";
@@ -15,7 +15,7 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
   private waitingConnections: WebSocket[] = [];
   private mainConnection: WebSocket | null = null;
   private closed = false;
-  private readonly term: CachingTerminal;
+  private readonly term: DumpableTerminal;
 
   constructor(
     private readonly sessionManager: ISessionManager,
@@ -23,7 +23,7 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
     args: IProgramArguments) {
     super(args.presenterBind, args, "presenter");
 
-    this.term = sessionManager.getTerminal("presenter") as CachingTerminal;
+    this.term = sessionManager.getTerminal("presenter") as DumpableTerminal;
 
     this.term.on(EVENT_OUTPUT, (output: Output) =>
       this.mutex.runExclusive(() =>
@@ -32,6 +32,11 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
     this.term.on(EVENT_AUDIENCE_COUNT, (count: number) =>
       this.mutex.runExclusive(() =>
         this.sendToMain({audienceCount: count})));
+  }
+
+  protected listening() {
+    super.listening();
+    this.logger.info(`Open http://${this.bindHost}:${this.bindPort}/ to access the writable console!`);
   }
 
   protected marshalMessage(message: web.IServerMessage): Uint8Array {

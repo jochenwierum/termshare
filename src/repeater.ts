@@ -1,6 +1,6 @@
-import {RemoteSessionManager} from "./sessionManager";
+import {MultipleSessionManager} from "./sessionManager";
 import {IProgramArguments} from "./argumentParser";
-import {CachingTerminal, UpdatingTerminal} from "./terminal";
+import {DumpableTerminal, UpdatingTerminal} from "./terminal";
 import {
   EVENT_AUDIENCE_COUNT,
   EVENT_OUTPUT,
@@ -21,12 +21,12 @@ import {EventEmitter} from "events";
 import IStreamData = repeater.IStreamData;
 
 type RepeaterWebsocket = WebSocket & {
-  terminal?: CachingTerminal;
+  terminal?: DumpableTerminal;
 }
 
 export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
   constructor(
-    private readonly sessionManager: RemoteSessionManager,
+    private readonly sessionManager: MultipleSessionManager,
     args: IProgramArguments) {
     super(args.repeaterBind, args, "repeater-server");
   }
@@ -62,7 +62,7 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
   }
 
   private async handleFirstMessage(connection: RepeaterWebsocket, decoded: repeater.StreamData) {
-    let terminal: CachingTerminal;
+    let terminal: DumpableTerminal;
 
     try {
       terminal = this.createTerminal(decoded);
@@ -87,7 +87,7 @@ export class RepeaterServer extends WebSocketServer<repeater.IStreamFeedback> {
     });
   }
 
-  private createTerminal(decoded: repeater.StreamData): CachingTerminal {
+  private createTerminal(decoded: repeater.StreamData): DumpableTerminal {
     if (decoded.content !== "init") {
       throw new Error("First message was not an init message");
     }

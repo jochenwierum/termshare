@@ -4,9 +4,9 @@ import {ISessionManager, TerminalSessionId} from "./sessionManager";
 import {Mutex} from "async-mutex";
 import WebSocket from "ws";
 import {web} from "./proto/web";
-import {CachingTerminal} from "./terminal";
+import {DumpableTerminal} from "./terminal";
 import {EVENT_OUTPUT, EVENT_QUIT, EVENT_RESIZE, EVENT_SELECTION, Output, Resize, Selection} from "./types";
-
+import {EventEmitter} from "events";
 
 type AudienceWebSocket = WebSocket & {
   session?: TerminalSessionId;
@@ -29,6 +29,18 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
     private readonly sessionManager: ISessionManager,
     args: IProgramArguments) {
     super(args.audienceBind, args, "audience");
+
+    if (sessionManager instanceof EventEmitter) {
+      sessionManager.on("newSession", (name) =>
+        this.logger.info(`Use http://${this.bindHost}:${this.bindPort}/${name} to watch name's console!`));
+    }
+  }
+
+  protected listening() {
+    super.listening();
+    if (!(this.sessionManager instanceof EventEmitter)) {
+      this.logger.info(`Use http://${this.bindHost}:${this.bindPort}/ to watch the console!`);
+    }
   }
 
   protected marshalMessage(message: web.IServerMessage) {
@@ -86,7 +98,6 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
 
     connection.on("close", () => this.closeSocket(connection));
   }
-
 
   private async startClient(connection: AudienceWebSocket, requestedSessionName: string): Promise<void> {
     return this.mutex.runExclusive(async () => {
@@ -148,7 +159,7 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
     });
   }
 
-  private startTerminalEventHandler(terminal: CachingTerminal, session: Session) {
+  private startTerminalEventHandler(terminal: DumpableTerminal, session: Session) {
     this.logger.info("Starting broadcaster", {sessionName: session.name});
 
     const onQuit = () => this.closeAllConnections(session);

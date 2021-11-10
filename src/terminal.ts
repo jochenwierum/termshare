@@ -40,7 +40,7 @@ export class UncachedTerminal extends UpdatingTerminal {
   }
 }
 
-export class CachingTerminal extends UpdatingTerminal {
+export class DumpableTerminal extends UpdatingTerminal {
   private readonly logger: Logger;
 
   public readonly mutex = new Mutex();

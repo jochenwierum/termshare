@@ -36,8 +36,8 @@ export abstract class WebSocketServer<M> implements IDisposable {
   protected logger: Logger;
   protected server: http.Server;
   protected readonly wsServer: WsServer;
-  private readonly bindPort: number;
-  private readonly bindHost: string;
+  protected readonly bindPort: number;
+  protected readonly bindHost: string;
   private readonly pingInterval: NodeJS.Timer | null = null;
 
   protected constructor(
@@ -49,8 +49,7 @@ export abstract class WebSocketServer<M> implements IDisposable {
     [this.bindHost, this.bindPort] = parseBind(bind);
 
     const app = express();
-    this.server = app.listen(this.bindPort, this.bindHost, () =>
-      this.logger.info(`HTTP server ${this.bindHost}:${this.bindPort} started`));
+    this.server = app.listen(this.bindPort, this.bindHost, () => this.listening());
 
     this.wsServer = this.addWebsocketHandler(this.server);
     this.start(app);
@@ -161,6 +160,10 @@ export abstract class WebSocketServer<M> implements IDisposable {
     }
 
     return this.sendRaw(connection, this.marshalMessage(message));
+  }
+
+  protected listening() {
+    this.logger.info(`HTTP server ${this.bindHost}:${this.bindPort} started`);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
