@@ -32,8 +32,9 @@ message ServerMessage {
 message Init {
   Resize size = 1;
   bool decoration = 2;
-  string font = 3;
-  uint32 expectedPingInterval = 4;
+  string fontName = 3;
+  uint32 fontSize = 4;
+  uint32 expectedPingInterval = 5;
 }
 
 message Resize {

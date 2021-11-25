@@ -24,6 +24,7 @@ export interface IProgramArguments {
   decoration: boolean;
   debug: boolean;
   fontFamily: string | null;
+  fontSize: number;
   killSignal: string;
   mode: Mode;
   presenterBind: string;
@@ -42,6 +43,7 @@ interface IRawProgramArguments {
   decoration: boolean;
   debug: boolean;
   "font-family": string | null;
+  "font-size": number;
   "kill-signal": string;
   mode: Mode;
   "presenter-bind": string;
@@ -69,7 +71,7 @@ function defaultValue<T>(name: string, fallbackValue: T, convert: (v: string) =>
   }
 }
 
-const parseWidthOrHeight = (value: string) => {
+const parsePositiveInteger = (value: string) => {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : -1;
 };
@@ -122,6 +124,14 @@ const optionDefinitions: OptionDefinition[] = [
     group: ["repeater", "combined"]
   },
   {
+    name: "font-size",
+    alias: "S",
+    defaultValue: defaultValue("font-size", 12, parsePositiveInteger),
+    description: "The font size to use in the web.",
+    typeLabel: "{underline string}",
+    group: ["repeater", "combined"]
+  },
+  {
     name: "kill-signal",
     alias: "k",
     defaultValue: defaultValue("kill-signal", "SIGHUP"),
@@ -139,7 +149,7 @@ const optionDefinitions: OptionDefinition[] = [
   },
   {
     name: "presenter-bind",
-    alias: "b",
+    alias: "p",
     defaultValue: defaultValue("presenter-bind", "127.0.0.1:8081"),
     description: "Where to bind the presenter port to.\nDefaults to 127.0.0.1:8081",
     typeLabel: "{underline bind-address}",
@@ -147,9 +157,9 @@ const optionDefinitions: OptionDefinition[] = [
   },
   {
     name: "presenter-height",
-    type: parseWidthOrHeight,
+    type: parsePositiveInteger,
     alias: "h",
-    defaultValue: defaultValue("presenter-height", 0, parseWidthOrHeight),
+    defaultValue: defaultValue("presenter-height", 0, parsePositiveInteger),
     description: "Terminal with (0 = auto resize). Must be set if presenterHeight is set.\nDefaults to 0",
     typeLabel: "{underline integer}",
     group: "web"
@@ -176,8 +186,8 @@ const optionDefinitions: OptionDefinition[] = [
   {
     name: "presenter-width",
     alias: "w",
-    type: parseWidthOrHeight,
-    defaultValue: defaultValue("presenter-width", 0, parseWidthOrHeight),
+    type: parsePositiveInteger,
+    defaultValue: defaultValue("presenter-width", 0, parsePositiveInteger),
     description: "Terminal with (0 = auto resize). Must be set if presenterHeight is set.\nDefaults to 0",
     typeLabel: "{underline integer}",
     group: "web"
@@ -192,7 +202,7 @@ const optionDefinitions: OptionDefinition[] = [
   },
   {
     name: "repeater-bind",
-    alias: "p",
+    alias: "R",
     defaultValue: defaultValue("repeater-bind", "127.0.0.1:8082"),
     description: "Where to listen for presenter connections.\nDefaults to 127.0.0.1:8082",
     typeLabel: "{underline bind-address}",
@@ -277,6 +287,9 @@ export const parseArguments: () => IProgramArguments = () => {
   if (args.mode === Mode.presenter && !args["repeater-server"])
     fail("Repeater address is missing");
 
+  if (args["font-size"] <= 0)
+    fail("Font size must be a positive integer");
+
   let cmd: string;
   let cmdArgs: string[] = [];
   if (!parsed._unknown || parsed._unknown.length === 0) {
@@ -295,6 +308,7 @@ export const parseArguments: () => IProgramArguments = () => {
     decoration: args.decoration,
     debug: args.debug,
     fontFamily: args["font-family"],
+    fontSize: args["font-size"],
     killSignal: args["kill-signal"],
     mode: args.mode,
     presenterBind: args["presenter-bind"],

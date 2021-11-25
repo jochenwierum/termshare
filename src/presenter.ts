@@ -67,7 +67,8 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
     await this.sendToMain({
       init: {
         decoration: this.args.decoration,
-        font: this.args.fontFamily,
+        fontName: this.args.fontFamily,
+        fontSize: this.args.fontSize,
         expectedPingInterval: WebSocketServer.PING_INTERVAL_MS,
         size
       }

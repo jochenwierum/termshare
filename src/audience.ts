@@ -146,7 +146,8 @@ export default class extends StaticFileWebSocketServer<web.IServerMessage> {
                 width: terminal.getWidth(),
               },
               decoration: terminal.decorated,
-              font: this.args.fontFamily,
+              fontName: this.args.fontFamily,
+              fontSize: this.args.fontSize,
               expectedPingInterval: WebSocketServer.PING_INTERVAL_MS,
             }
           })])) [0];

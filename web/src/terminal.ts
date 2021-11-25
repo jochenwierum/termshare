@@ -20,7 +20,10 @@ export default class Terminal extends EventEmitter {
   private prefix = "";
   private title = "";
 
-  constructor(parent: HTMLElement, fontFamily: string | null | undefined, isPresenter: boolean, maximize = false) {
+  constructor(parent: HTMLElement,
+              fontFamily: string | null | undefined,
+              fontSize: number | null | undefined,
+              isPresenter: boolean, maximize = false) {
     super();
 
     if (!isPresenter) maximize = false;
@@ -35,11 +38,13 @@ export default class Terminal extends EventEmitter {
       disableStdin: !isPresenter,
       cols: 80,
       rows: 24,
-      scrollback: 0,
+      scrollback: 0
     });
-    this.term.setOption("bellStyle", "visual");
     if (fontFamily) {
-      this.term.setOption("fontFamily", fontFamily);
+      this.term.options.fontFamily = fontFamily;
+    }
+    if (fontSize) {
+      this.term.options.fontSize = fontSize;
     }
 
     this.term.loadAddon(new WebLinksAddon());

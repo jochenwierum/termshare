@@ -72,21 +72,21 @@ export default abstract class {
   }
 
   private init(message: web.IInit) {
-    if (!message.font) {
+    if (!message.fontName) {
       this.initTerminal(message);
       return;
     }
 
     this.overlay.show("Loading font...");
 
-    new FontFaceObserver(message.font).load(null, 4000).then(
+    new FontFaceObserver(message.fontName).load(null, 4000).then(
       () => {
         this.overlay.hide();
         console.log("Font loaded - initializing terminal");
       },
       () => {
         console.log("Unable to load font (timeout) - continuing without it...");
-        message.font = "";
+        message.fontName = "";
         return new Promise<void>(resolve =>
           this.overlay.show("Could not load font", "Continue", resolve));
       })
@@ -105,7 +105,7 @@ export default abstract class {
     const maximise = this.isPresenter && !init.size;
     this.decoration = new Decoration(this.overlay.content, !!init.decoration, maximise);
     this.decoration.setTitle("loading...");
-    this.terminal = new Terminal(this.decoration.consoleDiv, init.font, this.isPresenter, maximise);
+    this.terminal = new Terminal(this.decoration.consoleDiv, init.fontName, init.fontSize, this.isPresenter, maximise);
 
     if (init.size && init.size?.width !== 0) {
       this.terminal.resize(init.size);
