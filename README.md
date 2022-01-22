@@ -10,7 +10,7 @@ I was looking for a way to include a console in the presentation which I could r
 While it was easy on the presenter side (there were tools like [ttyd](https://github.com/tsl0922/ttyd),
 [GoTTY](https://golangrepo.com/repo/sorenisanerd-gotty-go-web-applications) or
 [butterfly.py](https://github.com/paradoxxxzero/butterfly)), I did not find a satisfying solution to share the
-content in a save and read only way over some kind of repeater to the web.
+content in a safe and read only way over some kind of repeater to the web.
 
 So I started my own little hobby project for this problem :)
 
@@ -34,7 +34,7 @@ Termshare can operate in multiple modes:
 This is the simplest case which is the default if no arguments are provided:
 
 ```text
-+------------------------------------------+     +-----------------------+
++-----------------------------------------+     +-----------------------+
 | termshare -m combined -i console myapp  | <-- | Webbrowser:           |
 |                                         |     | http://127.0.0.1:8080 |
 |  +-----------------------------------+  |     +-----------------------+
@@ -47,7 +47,7 @@ This is the simplest case which is the default if no arguments are provided:
 +-----------------------------------------+
 ```
 
-The mode (`-m`) `combinded` means that the provided app is started locally.
+The mode (`-m`) `combined` means that the provided app is started locally.
 The listeners connect to the same process via port 8080 (the „audience port)“.
 The port can be configured (`-a` or `--audience-bind`), see below.
 The application runs locally in the terminal that invoked `termshare` (`-i console`).
@@ -90,7 +90,7 @@ It is also possible to forward the input to a dedicated „repeater“. The repe
 Each session must have a unique session name (`-s` or `--presenter-session`).
 The audience must also append this session name to the url.
 
-Termshare does not secure any of its http connection!
+Termshare does not secure any of its http connections!
 It is recommended to secure at least the access to the repeater connection (e.g. by using an SSH tunnel).
 
 ```text
@@ -110,14 +110,14 @@ It is recommended to secure at least the access to the repeater connection (e.g.
 | termshare -m repeater    | <-- | Webbrowser:                    |
 |                          |     | http://public-ip:8080/session1 |
 | listening on sockets:    |     +--------------------------------+
-|   0.0.0.0:8080           |       
+|   0.0.0.0:8080           |
 | 127.0.0.1:8082           | <-- +--------------------------------+
 +--------------------------+     | Webbrowser:                    |
-                                 | http://public-ip:8080/session1 |       
+                                 | http://public-ip:8080/session1 |
                                  +--------------------------------+
 ```
 
-Here, termshare runs in two different mode (in contrast to the `combined` mode above): presenter and repeater.
+Here, termshare runs in two different modes (in contrast to the `combined` mode above): presenter and repeater.
 The repeater's address can be provided with the parameter (`-r` or `--repeater-server`).
 By default, it assumes some kind of tunnel like the ssh scenario above and connects to 127.0.0.1:8082.
 
@@ -143,7 +143,7 @@ By default, it assumes some kind of tunnel like the ssh scenario above and conne
 | termshare -m repeater          | <-- | Webbrowser:                |
 |                                |     | http://public-ip:8080/demo |
 | listening on sockets:          |     +----------------------------+
-|   0.0.0.0:8080                 |     
+|   0.0.0.0:8080                 |
 | 127.0.0.1:8082                 | <-- +----------------------------+
 +--------------------------------+     | Webbrowser:                |
                                        | http://public-ip:8080/demo |
@@ -186,6 +186,14 @@ Therefore, the Docker file has different defaults:
 | `--repeater-bind` | `0.0.0.0:8082` |
 
 
+## How to build this software?
+
+1. Checkout
+2. Run `npm run install-all` to download all npm dependencies.
+3. Run `npm run build` to compile the software.
+4. Run `npm link` to create a link to `termshare` in `$PATH`.
+5. `termshare` is now available!
+
 ## Why is this even complicated?
 
 Mirroring a terminal is not as easy as it seems.
@@ -203,7 +211,7 @@ If a client connects in the middle of a session, we could just send everything t
 However, this is not a good idea, especially for long sessions. What we need instead is some kind of "screenshot"
 together with a dump of the internal state (for example the current scrolling regions).
 
-The bad news is, that there is no way to crate such dump. 
+The bad news is, that there is no way to create such dump.
 The state of the terminal is implemented in your terminal applications and there is no proper way to export that state.
 Even worse, such an export functionality would not be portable.
 Some tools like screen or tmux have to rebuild the state, if a new client connects.
@@ -211,20 +219,20 @@ But they don't have an API to export that state either.
 
 So the only way to solve this problem is to wrap the [PTY](https://en.wikipedia.org/wiki/Pseudoterminal)
 of the invoked command and keep track of the current state on our own.
-Whenever a new clients connects, we can derive the current state.
+Whenever a new client connects, we can derive the current state.
 This sounds easy, but the number of ansi sequences is really huge, not every sequence is documented and
 handling unicode in a terminal is not funny either.
 
 The best solution I found was [xterm.js](https://xtermjs.org/).
 It's [serialize addon](https://github.com/xtermjs/xterm.js/tree/master/addons/xterm-addon-serialize) isn't complete,
-but it is the best solution I could find.  
-It exports the currently visible screen and the most important terminal state. 
+but it is the best solution I could find.
+It exports the currently visible screen and the most important terminal state.
 However, a big portion of the state (like the mouse interaction) is not exported yet.
 But for most use cases, it is still perfect!
 And it is a *much* better solution than I am able to write myself (believe me, I tried!).
 
 On the serverside, termshare uses xterm.js headless to simulate a virtual terminal.
-Whenever a client connects, the terminal is serialized and send to the client.
+Whenever a client connects, the terminal is serialized and sent to the client.
 This includes the currently visible content of the screen and some state.
 The clients also use xterm.js in the browser to render the terminal.
 All following changes are pushed to the client as they happen.
