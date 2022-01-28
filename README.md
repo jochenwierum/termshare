@@ -197,7 +197,7 @@ Therefore, the Docker file has different defaults:
 ## Why is this even complicated?
 
 Mirroring a terminal is not as easy as it seems.
-At lest not, if you don't want to replay the full session everytime a new client connects.
+At least not, if you don't want to replay the full session everytime a new client connects.
 
 Terminal applications use a variety of [ansi sequences codes](https://en.wikipedia.org/wiki/ANSI_escape_code).
 Some of them are poorly documented.
