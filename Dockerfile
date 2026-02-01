@@ -1,4 +1,6 @@
-FROM node:18.3.0-alpine3.15 AS build
+ARG nodeImage=node:24-alpine
+
+FROM $nodeImage AS build
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
@@ -14,7 +16,7 @@ RUN NODE_ENV=production npm ci
 
 
 
-FROM node:18.3.0-alpine3.15
+FROM $nodeImage
 
 ENV NODE_ENV production
 

@@ -1,0 +1,8 @@
+version: v2
+inputs:
+  - directory: src
+plugins:
+  - local: protoc-gen-es
+    opt: target=ts,import_extension=js
+    out: build
+

@@ -1,0 +1,51 @@
+{
+  "name": "@termshare/server",
+  "type": "module",
+  "scripts": {
+    "build": "npm run compile && npm run bundle",
+    "compile": "tsc",
+    "bundle": "rollup --configPlugin typescript --config rollup.config.ts",
+    "dev": "npx ts-node src/run-develop.ts",
+    "type-check:all": "npm run type-check && cd web && npm run type-check",
+    "lint:all": "npm run lint && cd web && npm run lint",
+    "lint-and-fix:all": "npm run lint-and-fix && cd web && npm run lint-and-fix",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint --flag unstable_native_nodejs_ts_config",
+    "lint-and-fix": "eslint --fix --flag unstable_native_nodejs_ts_config",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/ws": "^8.18.1",
+    "@xterm/addon-serialize": "^0.14.0",
+    "@xterm/headless": "^6.0.0",
+    "async-mutex": "^0.5.0",
+    "command-line-args": "^6.0.1",
+    "command-line-usage": "^7.0.3",
+    "express": "^5.2.1",
+    "express-static-gzip": "^3.0.0",
+    "node-pty": "^1.1.0",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.8.1",
+    "winston": "^3.19.0",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/command-line-args": "^5.2.3",
+    "@types/command-line-usage": "^5.0.4",
+    "@types/node": "^25.0.10",
+    "rollup": "^4.57.1"
+  },
+  "peerDependencies": {
+    "@termshare/protocol": "*"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "bin": {
+    "termshare": "./bin/index.js"
+  }
+}

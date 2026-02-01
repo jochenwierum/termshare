@@ -1,0 +1,28 @@
+{
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/run-develop.ts"
+  ],
+  "compilerOptions": {
+    "declaration": true,
+    "esModuleInterop": true,
+    "importHelpers": true,
+    "lib": [
+      "ES6",
+      "ES2024"
+    ],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "build",
+    "removeComments": true,
+    "rootDir": "src",
+    "strict": true,
+    "target": "ES2024",
+  },
+  "ts-node": {
+    "esm": true,
+    "experimentalResolver": true
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@termshare/protocol",
+  "type": "module",
+  "scripts": {
+    "build": "buf generate && tsc"
+  },
+  "exports": {
+    "./*.js": "./build/*.js"
+  },
+  "dependencies": {
+    "@bufbuild/protobuf": "^2.11.0"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "^1.64.0",
+    "@bufbuild/protoc-gen-es": "^2.11.0"
+  }
+}

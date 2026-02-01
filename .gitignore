@@ -2,7 +2,6 @@
 .idea
 test
 node_modules
+build
 dist
-.ts-buildcache
-
 share.sh
