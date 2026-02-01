@@ -9,10 +9,10 @@
   "scripts": {
     "ncu": "npx npm-check-updates",
     "ncu-install": "npm-check-updates -u",
-    "build": "npm run build --workspace=protocol && npm run build --workspace=server && npm run build --workspace=client",
-    "type-check": "npm run type-check --workspace=server",
-    "lint": "npm run lint --workspace=server",
-    "lint-and-fix": "npm run lint-and-fix --workspace=server"
+    "build": "npm run build --workspace=protocol && npm run build --workspace=client && npm run build --workspace=server",
+    "type-check": "npm run type-check --workspace=client && npm run type-check --workspace=server",
+    "lint": "npm run lint --workspace=client && npm run lint --workspace=server",
+    "lint-and-fix": "npm run lint-and-fix --workspace=client && npm run lint-and-fix --workspace=server"
   },
   "workspaces": [
     "./protocol",
@@ -27,8 +27,5 @@
   },
   "dependencies": {
     "@bufbuild/protobuf": "^2.11.0"
-  },
-  "volta": {
-    "node": "24.13.0"
   }
 }

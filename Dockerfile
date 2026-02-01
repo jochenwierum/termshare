@@ -4,11 +4,13 @@ FROM $nodeImage AS build
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
-copy package.json package-lock.json ./
-copy web/package.json web/package-lock.json ./web/
+copy protocol/package.json ./protocol/
+copy server/package.json ./server/
+copy client/package.json ./client/
+copy package.json ./
+copy package-lock.json ./
 
 RUN npm ci
-RUN cd web && npm ci
 
 COPY . .
 RUN npm run build
@@ -18,17 +20,17 @@ RUN NODE_ENV=production npm ci
 
 FROM $nodeImage
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 WORKDIR /app
 COPY --from=build /app/node_modules/ ./node_modules/
-COPY --from=build /app/dist/ ./dist/
-COPY --from=build /app/bin/ ./bin/
-COPY --from=build /app/ /app/package.json /app/package-lock.json ./
+COPY --from=build /app/server/dist/ ./
+COPY --from=build /app/client/dist ./static/
+COPY --from=build /app/package.json /app/package-lock.json ./
 
-ENV TERMSHARE_MODE repeater
-ENV TERMSHARE_REPEATER_BIND 0.0.0.0:8082
+ENV TERMSHARE_MODE=repeater
+ENV TERMSHARE_REPEATER_BIND=0.0.0.0:8082
 
 USER 65534
-ENTRYPOINT ["node", "bin/index.js"]
+ENTRYPOINT ["node", "index.js"]
 CMD []

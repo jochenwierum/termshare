@@ -149,7 +149,8 @@ export class StaticFileWebSocketServer extends WebSocketServer {
         }));
     }
     httpBaseDir(dir) {
-        const isDebugBuild = path.basename(__dirname) === "dist";
+        let basename = path.basename(__dirname);
+        const isDebugBuild = basename === "build" || basename === "src";
         const relDir = isDebugBuild ? `../../client/dist/${dir}` : `static/${dir}`;
         return path.normalize(path.join(__dirname, relDir));
     }

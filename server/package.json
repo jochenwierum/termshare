@@ -5,14 +5,13 @@
     "build": "npm run compile && npm run bundle",
     "compile": "tsc",
     "bundle": "rollup --configPlugin typescript --config rollup.config.ts",
-    "dev": "npx ts-node src/run-develop.ts",
+    "start": "node dist/index.js",
     "type-check:all": "npm run type-check && cd web && npm run type-check",
     "lint:all": "npm run lint && cd web && npm run lint",
     "lint-and-fix:all": "npm run lint-and-fix && cd web && npm run lint-and-fix",
     "type-check": "tsc --noEmit",
     "lint": "eslint --flag unstable_native_nodejs_ts_config",
-    "lint-and-fix": "eslint --fix --flag unstable_native_nodejs_ts_config",
-    "start": "node dist/index.js"
+    "lint-and-fix": "eslint --fix --flag unstable_native_nodejs_ts_config"
   },
   "dependencies": {
     "@types/express": "^5.0.6",
@@ -25,7 +24,6 @@
     "express": "^5.2.1",
     "express-static-gzip": "^3.0.0",
     "node-pty": "^1.1.0",
-    "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
     "winston": "^3.19.0",
     "ws": "^8.19.0"
@@ -36,16 +34,17 @@
     "@types/command-line-args": "^5.2.3",
     "@types/command-line-usage": "^5.0.4",
     "@types/node": "^25.0.10",
-    "rollup": "^4.57.1"
+    "rollup": "^4.57.1",
+    "rollup-plugin-add-shebang": "^0.3.1",
+    "rollup-plugin-copy": "^3.5.0"
   },
   "peerDependencies": {
     "@termshare/protocol": "*"
   },
   "files": [
-    "dist",
-    "bin"
+    "dist"
   ],
   "bin": {
-    "termshare": "./bin/index.js"
+    "termshare": "./dist/index.js"
   }
 }

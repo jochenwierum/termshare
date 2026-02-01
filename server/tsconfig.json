@@ -2,9 +2,6 @@
   "include": [
     "src/**/*.ts"
   ],
-  "exclude": [
-    "src/run-develop.ts"
-  ],
   "compilerOptions": {
     "declaration": true,
     "esModuleInterop": true,
@@ -19,10 +16,6 @@
     "removeComments": true,
     "rootDir": "src",
     "strict": true,
-    "target": "ES2024",
-  },
-  "ts-node": {
-    "esm": true,
-    "experimentalResolver": true
+    "target": "ES2024"
   }
 }

@@ -2,8 +2,6 @@
 .idea
 test
 **/node_modules
-dist
-.ts-buildcache
-web/.tmp
-
+**/dist
+**/build
 share.sh

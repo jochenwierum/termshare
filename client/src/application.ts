@@ -55,7 +55,7 @@ export default abstract class {
   }
 
   private internalHandleMessage(data: ArrayBuffer): void {
-    let message = fromBinary(ServerMessageSchema, new Uint8Array(data));
+    const message = fromBinary(ServerMessageSchema, new Uint8Array(data));
     const content = message.content;
     switch (content.case) {
       case "output":

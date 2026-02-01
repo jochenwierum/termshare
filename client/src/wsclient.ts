@@ -59,11 +59,11 @@ export default class extends EventEmitter {
     }
 
     public sendPresenterClientMessage(message: PresenterClientMessage): void {
-        this.send(toBinary(PresenterClientMessageSchema, message))
+        this.send(toBinary(PresenterClientMessageSchema, message));
     }
 
     public sendAudienceClientMessage(message: AudienceClientMessage): void {
-        this.send(toBinary(AudienceClientMessageSchema, message))
+        this.send(toBinary(AudienceClientMessageSchema, message));
     }
 
     private send(array: Uint8Array): void {
