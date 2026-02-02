@@ -25,7 +25,6 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=build /app/node_modules/ ./node_modules/
 COPY --from=build /app/server/dist/ ./
-COPY --from=build /app/client/dist ./static/
 COPY --from=build /app/package.json /app/package-lock.json ./
 
 ENV TERMSHARE_MODE=repeater
