@@ -1,10 +1,9 @@
 import {defineConfig, globalIgnores} from "eslint/config";
-// @ts-ignore
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-    globalIgnores(["build"]),
+    globalIgnores(["build", "dist"]),
     eslint.configs.recommended,
     tseslint.configs.recommended,
     {

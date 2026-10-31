@@ -200,7 +200,7 @@ export abstract class StaticFileWebSocketServer<M> extends WebSocketServer<M> {
     }
 
     protected httpBaseDir(dir: string) {
-        let basename = path.basename(__dirname);
+        const basename = path.basename(__dirname);
         const isDebugBuild = basename === "build" || basename === "src";
         const relDir = isDebugBuild ? `../../client/dist/${dir}` : `static/${dir}`;
         return path.normalize(path.join(__dirname, relDir));
