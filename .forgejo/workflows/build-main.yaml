@@ -1,0 +1,50 @@
+name: Build main branch
+
+enable-email-notifications: true
+enable-openid-connect: true
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: ${{ forgejo.repository }}
+
+jobs:
+  build:
+    runs-on: default
+    steps:
+      - name: prepare
+        id: prepare
+        run: |
+          registry=$(echo ${{ env.ACTIONS_ID_TOKEN_REQUEST_URL }} | sed -e 's#^https\?://##' -e 's#/.*##' )
+          echo "registry=$registry" >> $FORGEJO_OUTPUT
+          
+          jwt=$( \
+            curl --silent --show-error --fail \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=${{ vars.AUD }}" \
+            | sed -e 's/.*"value":"//' -e 's/".*//' \
+          )
+          
+          echo "::add-mask::$jwt"
+          echo "jwt=$jwt" >> $FORGEJO_OUTPUT
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ steps.prepare.outputs.registry }}
+          username: any
+          password: ${{ steps.prepare.outputs.jwt }}
+
+      - name: Checkout the repo
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          docker buildx build  -t "${{ steps.prepare.outputs.registry }}/${{ env.IMAGE_NAME }}:latest" .
+
+      - name: Publish Docker image
+        run: |
+          docker push ${{ steps.prepare.outputs.registry }}/${{ env.IMAGE_NAME }}:latest
