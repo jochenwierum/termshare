@@ -20,12 +20,13 @@
     "./client"
   ],
   "devDependencies": {
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.54.0",
-    "npm-check-updates": "^19.3.1",
-    "eslint": "^9.39.2"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.14.0",
+    "npm-check-updates": "^23.1.1",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1"
   },
   "dependencies": {
-    "@bufbuild/protobuf": "^2.11.0"
+    "@bufbuild/protobuf": "^2.16.0"
   }
 }

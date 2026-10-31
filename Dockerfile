@@ -1,14 +1,14 @@
-ARG nodeImage=node:24-alpine
+ARG nodeImage=node:26-alpine
 
 FROM $nodeImage AS build
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
-copy protocol/package.json ./protocol/
-copy server/package.json ./server/
-copy client/package.json ./client/
-copy package.json ./
-copy package-lock.json ./
+COPY protocol/package.json ./protocol/
+COPY server/package.json ./server/
+COPY client/package.json ./client/
+COPY package.json ./
+COPY package-lock.json ./
 
 RUN npm ci
 
@@ -23,9 +23,9 @@ FROM $nodeImage
 ENV NODE_ENV=production
 
 WORKDIR /app
-COPY --from=build /app/node_modules/ ./node_modules/
-COPY --from=build /app/server/dist/ ./
-COPY --from=build /app/package.json /app/package-lock.json ./
+COPY --from=build --chmod=u=rwX,go=rX /app/node_modules/ ./node_modules/
+COPY --from=build --chmod=u=rwX,go=rX /app/server/dist/ ./
+COPY --from=build --chmod=u=rwX,go=rX /app/package.json /app/package-lock.json ./
 
 ENV TERMSHARE_MODE=repeater
 ENV TERMSHARE_REPEATER_BIND=0.0.0.0:8082

@@ -67,7 +67,7 @@ export default class extends EventEmitter {
     }
 
     private send(array: Uint8Array): void {
-        this.ws?.send(array.buffer);
+        this.ws?.send(array.buffer as ArrayBuffer);
     }
 
     public close() {
